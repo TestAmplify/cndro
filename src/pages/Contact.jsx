@@ -196,7 +196,7 @@ export default function Contact() {
                       </div>
                       <div className="space-y-1">
                         <h3 className="font-semibold">Call Us</h3>
-                        <p className="text-muted-foreground">+1 (555) 123-4567</p>
+                        <p className="text-muted-foreground">+1 (713)348-9243 (Ext-800)</p>
                         <p className="text-sm text-muted-foreground">Monday - Friday, 9 AM - 6 PM EST</p>
                       </div>
                     </div>
@@ -211,7 +211,7 @@ export default function Contact() {
                       </div>
                       <div className="space-y-1">
                         <h3 className="font-semibold">Visit Us</h3>
-                        <p className="text-muted-foreground">123 Business District<br />Tech City, TC 12345</p>
+                        <p className="text-muted-foreground">5850 San Felipe St, <br />Houston, TX 77057, USA</p>
                         <p className="text-sm text-muted-foreground">By appointment only</p>
                       </div>
                     </div>
