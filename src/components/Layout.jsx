@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button.jsx'
 import { 
   Menu, 
@@ -13,6 +13,8 @@ export default function Layout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+
 
   useEffect(() => {
     if (isDarkMode) {
@@ -27,8 +29,10 @@ export default function Layout({ children }) {
 
   const isActive = (path) => location.pathname === path
 
+
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:bg-background focus:text-foreground focus:px-3 focus:py-2 focus:rounded">Skip to content</a>
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,7 +115,7 @@ export default function Layout({ children }) {
               >
                 {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-              <Button className="hidden md:inline-flex btn-gradient">Let's Talk</Button>
+              <Button className="hidden md:inline-flex btn-gradient" onClick={() => navigate('/contact')}>Let's Talk</Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -191,7 +195,7 @@ export default function Layout({ children }) {
                   Contact Us
                 </Link>
                 <div className="px-3 py-2">
-                  <Button className="w-full btn-gradient">Let's Talk</Button>
+                  <Button className="w-full btn-gradient" onClick={() => { setIsMenuOpen(false); navigate('/contact') }}>Let's Talk</Button>
                 </div>
               </div>
             </div>
@@ -200,7 +204,7 @@ export default function Layout({ children }) {
       </header>
 
       {/* Main Content */}
-      <main>{children}</main>
+      <main id="main">{children}</main>
 
       {/* Footer */}
       <footer className="bg-muted py-12">

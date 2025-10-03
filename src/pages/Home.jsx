@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -13,8 +12,11 @@ import {
   Code,
   Smartphone
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Home() {
+  const navigate = useNavigate()
+
   return (
     <>
       {/* Hero Section */}
@@ -34,11 +36,11 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
-                <Button size="lg" className="group btn-gradient text-lg px-8 py-4">
+                <Button size="lg" className="group btn-gradient text-lg px-8 py-4" onClick={() => navigate('/contact')}>
                   Let's Talk
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 card-elevated">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4 card-elevated" onClick={() => navigate('/contact')}>
                   View Our Work
                 </Button>
               </div>
@@ -88,7 +90,7 @@ export default function Home() {
               <p className="text-xl text-muted-foreground leading-relaxed">
                 Let's discuss more about your business and learn how our solutions can transform your decision-making process and drive your business forward.
               </p>
-              <Button size="lg" className="group btn-gradient text-lg px-8 py-4">
+              <Button size="lg" className="group btn-gradient text-lg px-8 py-4" onClick={() => navigate('/contact')}>
                 Schedule Consultation
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -173,7 +175,7 @@ export default function Home() {
             <p className="text-xl text-muted-foreground mb-8">
               Schedule your free consultation now and take the first step towards success.
             </p>
-            <Button size="lg" className="btn-gradient text-lg px-10 py-4">
+            <Button size="lg" className="btn-gradient text-lg px-10 py-4" onClick={() => navigate('/contact')}>
               Book Free Consultation
             </Button>
           </div>
@@ -244,7 +246,7 @@ export default function Home() {
               <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
                 When our clients choose CNDRO LLC, they gain more than just an app — they gain a dedicated partner who's invested in our clients' growth. Let's discuss our clients' vision, explore what's possible, and build an app that becomes a cornerstone of our clients' business success.
               </p>
-              <Button size="lg" className="btn-gradient text-lg px-10 py-4 group">
+              <Button size="lg" className="btn-gradient text-lg px-10 py-4 group" onClick={() => navigate('/contact')}>
                 Start Your Project
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>

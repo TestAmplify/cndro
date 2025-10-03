@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -17,26 +17,60 @@ import {
   Users,
   Briefcase
 } from 'lucide-react'
+import { useForm, Controller } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const contactSchema = z.object({
+  name: z.string().min(2, 'Full name is required'),
+  email: z.string().email('Enter a valid email'),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  subject: z.string().min(2, 'Subject is required'),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+  service: z.string().optional(),
+})
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    subject: '',
-    message: '',
-    service: ''
+  const [submitting, setSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState({ type: '', message: '' })
+  const errorRegionRef = useRef(null)
+
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
+    resolver: zodResolver(contactSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      subject: '',
+      message: '',
+      service: ''
+    }
   })
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Form submitted:', formData)
-    // Handle form submission here
+  const onSubmit = async (data) => {
+    setSubmitting(true)
+    setSubmitResult({ type: '', message: '' })
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(text || 'Failed to send')
+      }
+      setSubmitResult({ type: 'success', message: "Message sent! We'll get back to you within 24 hours." })
+      reset()
+    } catch {
+      setSubmitResult({ type: 'error', message: 'There was an issue sending your message. Please try again.' })
+      if (errorRegionRef.current) errorRegionRef.current.focus()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -73,90 +107,99 @@ export default function Contact() {
 
               <Card className="p-8">
                 <CardContent className="p-0">
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate aria-describedby="form-errors">
+                    <div
+                      ref={errorRegionRef}
+                      id="form-errors"
+                      tabIndex={-1}
+                      className="sr-only"
+                      aria-live="assertive"
+                    >
+                      {Object.values(errors).length > 0 ? 'Please fix the indicated errors.' : ''}
+                    </div>
+
+                    {submitResult.message && (
+                      <div
+                        role="status"
+                        aria-live="polite"
+                        className={`text-sm ${submitResult.type === 'error' ? 'text-destructive' : 'text-emerald-600'}`}
+                      >
+                        {submitResult.message}
+                      </div>
+                    )}
+
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="name">Full Name *</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => handleInputChange('name', e.target.value)}
-                          required
-                        />
+                        <Input id="name" aria-invalid={!!errors.name} {...register('name')} />
+                        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => handleInputChange('email', e.target.value)}
-                          required
-                        />
+                        <Input id="email" type="email" aria-invalid={!!errors.email} {...register('email')} />
+                        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
                       </div>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(e) => handleInputChange('phone', e.target.value)}
-                        />
+                        <Input id="phone" {...register('phone')} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="company">Company</Label>
-                        <Input
-                          id="company"
-                          value={formData.company}
-                          onChange={(e) => handleInputChange('company', e.target.value)}
-                        />
+                        <Input id="company" {...register('company')} />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="service">Service of Interest</Label>
-                      <Select value={formData.service} onValueChange={(value) => handleInputChange('service', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a service" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="app-development">App Development</SelectItem>
-                          <SelectItem value="data-analytics">Data Analytics</SelectItem>
-                          <SelectItem value="consulting">Consulting Services</SelectItem>
-                          <SelectItem value="fractional-ceo">Fractional CEO</SelectItem>
-                          <SelectItem value="training">Training Programs</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="service"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="app-development">App Development</SelectItem>
+                              <SelectItem value="data-analytics">Data Analytics</SelectItem>
+                              <SelectItem value="consulting">Consulting Services</SelectItem>
+                              <SelectItem value="fractional-ceo">Fractional CEO</SelectItem>
+                              <SelectItem value="training">Training Programs</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject *</Label>
-                      <Input
-                        id="subject"
-                        value={formData.subject}
-                        onChange={(e) => handleInputChange('subject', e.target.value)}
-                        required
-                      />
+                      <Input id="subject" aria-invalid={!!errors.subject} {...register('subject')} />
+                      {errors.subject && <p className="text-sm text-destructive">{errors.subject.message}</p>}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="message">Message *</Label>
                       <Textarea
                         id="message"
-                        value={formData.message}
-                        onChange={(e) => handleInputChange('message', e.target.value)}
                         rows={5}
                         placeholder="Tell us about your project or how we can help you..."
-                        required
+                        aria-invalid={!!errors.message}
+                        {...register('message')}
                       />
+                      {errors.message && <p className="text-sm text-destructive">{errors.message.message}</p>}
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full group">
-                      Send Message
-                      <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <Button type="submit" size="lg" className="w-full group" disabled={submitting} aria-busy={submitting}>
+                      {submitting ? 'Sending…' : (
+                        <>
+                          Send Message
+                          <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </>
+                      )}
                     </Button>
                   </form>
                 </CardContent>
