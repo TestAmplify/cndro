@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input.jsx'
 import { Label } from '@/components/ui/label.jsx'
 import { Textarea } from '@/components/ui/textarea.jsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.jsx'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import { 
   ArrowRight, 
   Mail,
@@ -18,26 +22,52 @@ import {
   Briefcase
 } from 'lucide-react'
 
+const contactSchema = z.object({
+  name: z.string().min(2, 'Please enter your full name'),
+  email: z.string().email('Please enter a valid email'),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  subject: z.string().min(3, 'Subject must be at least 3 characters'),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+  service: z.string().optional(),
+})
+
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    subject: '',
-    message: '',
-    service: ''
+  const liveRef = useRef(null)
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setFocus, setValue, watch } = useForm({
+    resolver: zodResolver(contactSchema),
+    defaultValues: { name: '', email: '', phone: '', company: '', subject: '', message: '', service: '' }
   })
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+  useEffect(() => {
+    const first = Object.keys(errors)[0]
+    if (first) setFocus(first)
+  }, [errors, setFocus])
+
+  const onSubmit = async (values) => {
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        const msg = data?.error || 'Submission failed'
+        toast?.error ? toast.error('There was a problem sending your message.') : null
+        if (liveRef.current) liveRef.current.textContent = `Error: ${msg}`
+        return
+      }
+      toast?.success ? toast.success('Message sent! We will get back to you within 24 hours.') : null
+      if (liveRef.current) liveRef.current.textContent = 'Your message has been sent successfully.'
+      reset()
+    } catch {
+      toast?.error ? toast.error('Network error. Please try again.') : null
+      if (liveRef.current) liveRef.current.textContent = 'Network error while sending your message.'
+    }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Form submitted:', formData)
-    // Handle form submission here
-  }
+  const serviceValue = watch('service')
 
   return (
     <>
@@ -73,51 +103,49 @@ export default function Contact() {
 
               <Card className="p-8">
                 <CardContent className="p-0">
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+                    <div className="sr-only" aria-live="polite" aria-atomic="true" ref={liveRef}></div>
+
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="name">Full Name *</Label>
                         <Input
                           id="name"
-                          value={formData.name}
-                          onChange={(e) => handleInputChange('name', e.target.value)}
-                          required
+                          aria-invalid={!!errors.name || undefined}
+                          aria-describedby={errors.name ? 'name-error' : undefined}
+                          disabled={isSubmitting}
+                          {...register('name')}
                         />
+                        {errors.name && <p id="name-error" className="text-destructive text-sm">{errors.name.message}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">Email Address *</Label>
                         <Input
                           id="email"
                           type="email"
-                          value={formData.email}
-                          onChange={(e) => handleInputChange('email', e.target.value)}
-                          required
+                          aria-invalid={!!errors.email || undefined}
+                          aria-describedby={errors.email ? 'email-error' : undefined}
+                          disabled={isSubmitting}
+                          {...register('email')}
                         />
+                        {errors.email && <p id="email-error" className="text-destructive text-sm">{errors.email.message}</p>}
                       </div>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(e) => handleInputChange('phone', e.target.value)}
-                        />
+                        <Input id="phone" disabled={isSubmitting} {...register('phone')} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="company">Company</Label>
-                        <Input
-                          id="company"
-                          value={formData.company}
-                          onChange={(e) => handleInputChange('company', e.target.value)}
-                        />
+                        <Input id="company" disabled={isSubmitting} {...register('company')} />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="service">Service of Interest</Label>
-                      <Select value={formData.service} onValueChange={(value) => handleInputChange('service', value)}>
+                      <Select value={serviceValue} onValueChange={(v) => setValue('service', v, { shouldValidate: true })} disabled={isSubmitting}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a service" />
                         </SelectTrigger>
@@ -136,26 +164,30 @@ export default function Contact() {
                       <Label htmlFor="subject">Subject *</Label>
                       <Input
                         id="subject"
-                        value={formData.subject}
-                        onChange={(e) => handleInputChange('subject', e.target.value)}
-                        required
+                        aria-invalid={!!errors.subject || undefined}
+                        aria-describedby={errors.subject ? 'subject-error' : undefined}
+                        disabled={isSubmitting}
+                        {...register('subject')}
                       />
+                      {errors.subject && <p id="subject-error" className="text-destructive text-sm">{errors.subject.message}</p>}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="message">Message *</Label>
                       <Textarea
                         id="message"
-                        value={formData.message}
-                        onChange={(e) => handleInputChange('message', e.target.value)}
                         rows={5}
                         placeholder="Tell us about your project or how we can help you..."
-                        required
+                        aria-invalid={!!errors.message || undefined}
+                        aria-describedby={errors.message ? 'message-error' : undefined}
+                        disabled={isSubmitting}
+                        {...register('message')}
                       />
+                      {errors.message && <p id="message-error" className="text-destructive text-sm">{errors.message.message}</p>}
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full group">
-                      Send Message
+                    <Button type="submit" size="lg" className="w-full group" disabled={isSubmitting}>
+                      {isSubmitting ? 'Sending...' : 'Send Message'}
                       <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Button>
                   </form>
