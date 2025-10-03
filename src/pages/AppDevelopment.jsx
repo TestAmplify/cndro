@@ -14,8 +14,10 @@ import {
   Target,
   Zap
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function AppDevelopment() {
+  const navigate = useNavigate()
   return (
     <>
       {/* Hero Section */}
@@ -49,7 +51,7 @@ export default function AppDevelopment() {
             </div>
             <div className="text-center lg:text-right">
               <p className="text-lg mb-4">Limited Spots Available This Month.</p>
-              <Button variant="secondary" size="lg" className="group">
+              <Button variant="secondary" size="lg" className="group" onClick={() => navigate('/contact')}>
                 Contact Us
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -348,7 +350,7 @@ export default function AppDevelopment() {
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
                 Let's discuss your vision, explore what's possible, and build an app that becomes a cornerstone of your business success.
               </p>
-              <Button size="lg" className="group">
+              <Button size="lg" className="group" onClick={() => navigate('/contact')}>
                 Start Your Project Today
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
