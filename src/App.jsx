@@ -9,6 +9,7 @@ import Blog from './pages/Blog.jsx'
 import Contact from './pages/Contact.jsx'
 import Privacy from './pages/Privacy.jsx'
 import Terms from './pages/Terms.jsx'
+import { Toaster } from 'sonner'
 import './App.css'
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
         </Routes>
+        <Toaster position="top-right" richColors />
       </Layout>
     </Router>
   )
