@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)\\.(css|js|mjs|json|map|png|jpg|jpeg|gif|svg|ico|txt|webp|woff|woff2|ttf)$", "destination": "/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
